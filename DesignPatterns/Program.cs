@@ -190,8 +190,35 @@ Console.WriteLine();
 //Chain Of Responsibility 
 Console.WriteLine("Chain of Responsibility");
 var chain = new Chain(2);
+
+//handle using classes
 chain.Handle();
-chain.HandleLikeMiddleWares(); //done similar to .net core middlewares
+
+//handle using delegates like .net core middlewares
+chain.Use((requestNo, next) =>
+{
+    if (requestNo == 1) Console.WriteLine($"Handler {requestNo} handled the request");
+    else
+    {
+        Console.WriteLine($"Handler 1 didn't handle the request");
+        next();
+    }
+    
+});
+chain.Use((requestNo, next) =>
+{
+    if (requestNo == 2) Console.WriteLine($"Handler {requestNo} handled the request");
+    else
+    {
+        Console.WriteLine($"Handler 2 didn't handle the request");
+        next();
+    }
+});
+chain.Run(requestNo =>
+{
+    if (requestNo == 3) Console.WriteLine($"Handler {requestNo} Handled the request");
+    else Console.WriteLine($"No Handler handled the request {requestNo}");
+});
 Console.WriteLine();
 
 //Flyweight Pattern
