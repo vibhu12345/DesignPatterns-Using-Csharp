@@ -6,4 +6,5 @@
         else return new Factory2Product2();
     }
 
+    public string CreatePart() => "Factory2 part";
 }

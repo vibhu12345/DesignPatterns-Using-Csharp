@@ -85,7 +85,7 @@ var factory2product2 = factory2.CreateProduct("Product2");
 Console.WriteLine(factory2product2);
 Console.WriteLine();
 
-//Abstract Factory Pattern (No. of classes = No. of factories + No. of Products)
+//Abstract Factory Pattern (No. of classes = No. of factories + No. of Products: composition, the product asks its injected factory for its parts)
 Console.WriteLine("Abstract Factory Pattern");
 var factory1Product1 = factory1.CreateProduct<Product1>();
 Console.WriteLine(factory1Product1);

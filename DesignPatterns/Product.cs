@@ -12,7 +12,8 @@ public class Product2: IProduct
 
     public override string? ToString()
     {
-        return Factory + base.ToString();
+        // The product uses what its injected factory gives it (null when made by SimpleFactory)
+        return Factory is null ? base.ToString() : $"{base.ToString()} with {Factory.CreatePart()}";
     }
 
     public IFactory Factory { get; set ; }
