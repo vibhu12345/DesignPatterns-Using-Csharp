@@ -189,39 +189,44 @@ Console.WriteLine();
 
 //Chain Of Responsibility 
 Console.WriteLine("Chain of Responsibility");
-var chain = new Chain(2);
 
 //handle using classes
-chain.Handle();
+var handler1 = new Handler1();
+handler1.Next = new Handler2();
+Console.WriteLine(handler1.HandleRequest(2));
 
 //handle using delegates like .net core middlewares
-chain.Use((requestNo, next) =>
+var chain = new Chain();
+
+chain.Use(async (requestNo, next) =>
+{
+    Console.WriteLine($"Logger: before request {requestNo}");
+    await next();                                    // the rest of the chain runs here
+    Console.WriteLine($"Logger: after request {requestNo}");
+});
+chain.Use(async (requestNo, next) =>
 {
     if (requestNo == 1) Console.WriteLine($"Handler {requestNo} handled the request");
-    else
-    {
-        Console.WriteLine($"Handler 1 didn't handle the request");
-        next();
-    }
-    
+    else await next();
 });
-chain.Use((requestNo, next) =>
+chain.Use(async (requestNo, next) =>
 {
     if (requestNo == 2) Console.WriteLine($"Handler {requestNo} handled the request");
-    else
-    {
-        Console.WriteLine($"Handler 2 didn't handle the request");
-        next();
-    }
+    else await next();
 });
 chain.Run(requestNo =>
 {
-    if (requestNo == 3) Console.WriteLine($"Handler {requestNo} Handled the request");
-    else Console.WriteLine($"No Handler handled the request {requestNo}");
+    Console.WriteLine($"No Handler handled the request {requestNo}");
+    return Task.CompletedTask;
 });
+
+await chain.Handle(2);
+await chain.Handle(3);
 Console.WriteLine();
 
 //Flyweight Pattern
+
+
 
 
 

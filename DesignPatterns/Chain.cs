@@ -1,42 +1,25 @@
-﻿
-
+﻿// Chain of Responsibility with delegates, the way Microsoft built ASP.NET Core middleware.
+// Each handler is a lambda that receives the request and a next function and decides whether to call it.
 public class Chain
 {
-    private readonly Handler handler;
-    private readonly int requestNo;
-    private bool goNext = true;
-    public Chain(int requestNo)
+    private readonly List<Func<int, Func<Task>, Task>> handlers = [];
+
+    // Register only. Nothing runs yet.
+    public Chain Use(Func<int, Func<Task>, Task> handler)
     {
-        this.requestNo = requestNo;
-        handler = new Handler1();
-        var handler2 = new Handler2();
-        handler.Next = handler2;
-    }    
-    public void Run(Action<int> action)
-    {
-        if (goNext)
-        {
-            goNext = false;
-            action(requestNo);
-        }
+        handlers.Add(handler);
+        return this;
     }
 
-    private void next()
-    {
-        goNext = true;
-    }
+    // Terminal handler: it is never given a next, so the chain ends here
+    public Chain Run(Func<int, Task> handler) => Use((requestNo, _) => handler(requestNo));
 
-    public void Use(Action<int, Action> action)
-    {
-        if (goNext)
-        {
-            goNext = false;
-            action(requestNo, next);
-        }
-    }
+    // Run the whole chain for one request. Call it as many times as you like.
+    public Task Handle(int requestNo) => Invoke(0, requestNo);
 
-    internal void Handle()
-    {      
-        Console.WriteLine(handler.HandleRequest(requestNo));
-    }
+    // next() is simply "invoke the handler after me"
+    private Task Invoke(int index, int requestNo) =>
+        index < handlers.Count
+            ? handlers[index](requestNo, () => Invoke(index + 1, requestNo))
+            : Task.CompletedTask;
 }
