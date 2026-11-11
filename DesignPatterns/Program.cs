@@ -225,9 +225,133 @@ await chain.Handle(3);
 Console.WriteLine();
 
 //Flyweight Pattern
+Console.WriteLine("Flyweight Pattern");
+var fonts = new Flyweight<(string Name, int Size), Font>(key => new Font(key.Name, key.Size));
 
+var a = fonts.Get(("Arial", 12));
+var b = fonts.Get(("Arial", 12));
+var c = fonts.Get(("Arial", 14));
 
+Console.WriteLine(ReferenceEquals(a, b)); // True: one shared object
+Console.WriteLine(fonts.Count);           // 2 fonts, however many characters use them
 
+// The position differs for every character, so it is passed in, not stored
+Console.WriteLine(a.Draw('H', 0));        // H at 0 in Arial 12
+Console.WriteLine(c.Draw('i', 1));        // i at 1 in Arial 14
+Console.WriteLine();
 
+//Proxy Pattern
+Console.WriteLine("Proxy Pattern");
+// The caller asks for an IService and cannot tell it was handed a proxy
+IService service = LoggingProxy<IService>.Create(new Service());
+Console.WriteLine(service.DoWork("request 1"));
+// Proxy: calling DoWork
+// Proxy: DoWork returned
+// Work done for request 1
+Console.WriteLine();
 
- 
+//Prototype Pattern
+Console.WriteLine("Prototype Pattern");
+var prototype = new Product("Product1", 10, ["tag1"]);
+
+var copy = prototype with { };                      // a clone
+var variant = prototype with { Name = "Product2" }; // a clone with one change
+
+Console.WriteLine(copy == prototype);                // True: same values
+Console.WriteLine(ReferenceEquals(copy, prototype)); // False: a different object
+Console.WriteLine(variant);
+
+variant.Tags.Add("tag2");
+Console.WriteLine(prototype.Tags.Count);             // 2: the copy is shallow, so the list is shared
+Console.WriteLine();
+
+//Mediator Pattern
+Console.WriteLine("Mediator Pattern");
+var mediator = new Mediator();
+
+// Three colleagues. None of them holds a reference to another.
+mediator.Register<string>(message => Console.WriteLine("Colleague1 received " + message));
+mediator.Register<string>(message => Console.WriteLine("Colleague2 received " + message));
+mediator.Register<int>(number => Console.WriteLine("Colleague3 received " + number));
+
+mediator.Send("Hello"); // Colleague1 and Colleague2
+mediator.Send(42);      // Colleague3 only
+Console.WriteLine();
+
+//Memento Pattern
+Console.WriteLine("Memento Pattern");
+var editor = new Editor();
+editor.Type("Hello");
+editor.Type(" World");
+Console.WriteLine(editor); // Hello World
+editor.Undo();
+Console.WriteLine(editor); // Hello
+Console.WriteLine();
+
+//Visitor Pattern
+Console.WriteLine("Visitor Pattern");
+//visit using classes and double dispatch
+Shape[] shapes = [new Circle(1), new Rectangle(2, 3)];
+foreach (var shape in shapes) Console.WriteLine(shape.Accept(new AreaVisitor()));
+
+//visit using pattern matching: each operation is a function with a switch
+foreach (var shape in shapes) Console.WriteLine($"{Describe(shape)} has area {Area(shape):F2}");
+// Circle of radius 1 has area 3.14
+// 2 by 3 rectangle has area 6.00
+Console.WriteLine();
+
+//Interpreter Pattern
+Console.WriteLine("Interpreter Pattern");
+var expression = Parse("1 2 + 3 *");
+Console.WriteLine($"{Show(expression)} = {Evaluate(expression)}"); // ((1 + 2) * 3) = 9
+Console.WriteLine();
+
+//Local functions used by the Visitor and Interpreter sections
+
+// Each new operation is one function. The shapes are never touched.
+static double Area(Shape shape) => shape switch
+{
+    Circle c    => Math.PI * c.Radius * c.Radius,
+    Rectangle r => r.Width * r.Height,
+    _           => throw new ArgumentException($"Unknown shape {shape}"),
+};
+
+static string Describe(Shape shape) => shape switch
+{
+    Circle c    => $"Circle of radius {c.Radius}",
+    Rectangle r => $"{r.Width} by {r.Height} rectangle",
+    _           => throw new ArgumentException($"Unknown shape {shape}"),
+};
+
+// Postfix needs no brackets or precedence rules, so the parser is a stack
+static Expr Parse(string postfix)
+{
+    var stack = new Stack<Expr>();
+    foreach (var token in postfix.Split(' '))
+    {
+        if (int.TryParse(token, out var value)) { stack.Push(new Number(value)); continue; }
+
+        var right = stack.Pop();
+        var left = stack.Pop();
+        stack.Push(token == "+" ? new Add(left, right) : new Multiply(left, right));
+    }
+    return stack.Pop();
+}
+
+// One interpreter gives the sentence its value
+static int Evaluate(Expr expr) => expr switch
+{
+    Number n   => n.Value,
+    Add a      => Evaluate(a.Left) + Evaluate(a.Right),
+    Multiply m => Evaluate(m.Left) * Evaluate(m.Right),
+    _          => throw new ArgumentException($"Unknown expression {expr}"),
+};
+
+// Another prints it. The grammar below did not change.
+static string Show(Expr expr) => expr switch
+{
+    Number n   => n.Value.ToString(),
+    Add a      => $"({Show(a.Left)} + {Show(a.Right)})",
+    Multiply m => $"({Show(m.Left)} * {Show(m.Right)})",
+    _          => throw new ArgumentException($"Unknown expression {expr}"),
+};
