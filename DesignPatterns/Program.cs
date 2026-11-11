@@ -306,6 +306,23 @@ var expression = Parse("1 2 + 3 *");
 Console.WriteLine($"{Show(expression)} = {Evaluate(expression)}"); // ((1 + 2) * 3) = 9
 Console.WriteLine();
 
+//Repository Pattern (not one of the Gang of Four's: from Patterns of Enterprise Application Architecture)
+Console.WriteLine("Repository Pattern");
+// The caller sees a collection of vehicles. Where they are kept is the repository's business.
+IRepository<Vehicle> vehicles = new InMemoryRepository<Vehicle>(v => v.Id);
+
+vehicles.Add(new Vehicle(1, "KA-01", "Car"));
+vehicles.Add(new Vehicle(2, "KA-02", "Bike"));
+vehicles.Add(new Vehicle(3, "KA-03", "Car"));
+
+Console.WriteLine(vehicles.Get(2)?.Plate);                  // KA-02
+foreach (var car in vehicles.Find(v => v.Type == "Car"))    // the query is a lambda
+    Console.WriteLine(car.Plate);                           // KA-01, KA-03
+
+vehicles.Remove(1);
+Console.WriteLine(vehicles.Find(_ => true).Count());        // 2
+Console.WriteLine();
+
 //Local functions used by the Visitor and Interpreter sections
 
 // Each new operation is one function. The shapes are never touched.
